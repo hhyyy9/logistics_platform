@@ -1,0 +1,16 @@
+[package]
+name = "delivery_service"
+version = "1.0.0"
+authors = []
+
+[addresses]
+logistics_platform = "0xd6600cbe05c28dea705e623663ea618b24f92e22250a0e9b09475e1d2c1d8ed2"
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]
