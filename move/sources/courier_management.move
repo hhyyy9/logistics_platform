@@ -126,8 +126,8 @@ module logistics_platform::courier_management {
     /// Update completed orders
     public(friend) fun update_completed_orders(courier_address: address) acquires CourierStore {
         let courier_store = borrow_global_mut<CourierStore>(@logistics_platform);
-        let courier = table::borrow_mut(&mut courier_store.couriers, courier_address);
-        courier.completed_orders = courier.completed_orders + 1;
+        let courier_info = table::borrow_mut(&mut courier_store.couriers, courier_address);
+        courier_info.completed_orders = courier_info.completed_orders + 1;
     }
 
     /// Rate a courier
@@ -146,5 +146,10 @@ module logistics_platform::courier_management {
 
         // Mark the order as rated
         table::add(&mut courier_store.rated_orders, order_id, true);
+    }
+    
+    #[test_only]
+    public fun update_completed_orders_for_test(courier_address: address) acquires CourierStore {
+        update_completed_orders(courier_address)
     }
 }

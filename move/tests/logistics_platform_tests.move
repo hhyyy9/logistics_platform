@@ -1,11 +1,11 @@
 #[test_only]
 module logistics_platform::logistics_platform_tests {
     use std::signer;
-    use std::string;
     use aptos_framework::account;
-    use aptos_framework::coin;
-    use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::timestamp;
+    use aptos_framework::aptos_coin::AptosCoin;
+    use aptos_framework::coin::{Self, MintCapability};
+    use std::string;
     use logistics_platform::core;
     use logistics_platform::user_management;
     use logistics_platform::courier_management;
@@ -19,25 +19,65 @@ module logistics_platform::logistics_platform_tests {
     const COURIER1: address = @0x333;
     const COURIER2: address = @0x444;
 
-    // Test setup
-    fun setup_test(aptos_framework: &signer, admin: &signer) {
-        timestamp::set_time_has_started_for_testing(aptos_framework);
-        account::create_account_for_test(signer::address_of(admin));
-        coin::register<AptosCoin>(admin);
-
-        // Initialize modules
-        core::initialize(admin);
+    struct MintCapStore has key {
+        mint_cap: MintCapability<AptosCoin>,
     }
 
-    #[test(aptos_framework = @aptos_framework, admin = @logistics_platform)]
-    public entry fun test_initialize(aptos_framework: &signer, admin: &signer) {
-        setup_test(aptos_framework, admin);
+    // Test setup
+    fun setup_test(aptos_framework: &signer) acquires MintCapStore {
+        // Initialize the timestamp for testing
+        timestamp::set_time_has_started_for_testing(aptos_framework);
+
+        // Initialize AptosCoin
+        if (!coin::is_coin_initialized<AptosCoin>()) {
+            let (burn_cap, freeze_cap, mint_cap) = coin::initialize<AptosCoin>(
+                aptos_framework,
+                string::utf8(b"Aptos Coin"),
+                string::utf8(b"APT"),
+                8, // decimals
+                true // monitor_supply
+            );
+
+            // Move the mint capability to the aptos_framework account
+            move_to(aptos_framework, MintCapStore { mint_cap });
+
+            // Destroy unused capabilities
+            coin::destroy_burn_cap(burn_cap);
+            coin::destroy_freeze_cap(freeze_cap);
+        };
+
+        // Create and fund admin account
+        if (!account::exists_at(ADMIN)) {
+            account::create_account_for_test(ADMIN);
+        };
+        let admin = account::create_signer_for_test(ADMIN);
+        
+        // Register AptosCoin for the admin account
+        if (!coin::is_account_registered<AptosCoin>(ADMIN)) {
+            coin::register<AptosCoin>(&admin);
+        };
+        
+        // Mint coins to admin account
+        let amount = 1000000000; // Adjust as needed
+        if (exists<MintCapStore>(@aptos_framework)) {
+            let mint_cap = &borrow_global<MintCapStore>(@aptos_framework).mint_cap;
+            let coins = coin::mint(amount, mint_cap);
+            coin::deposit(ADMIN, coins);
+        };
+        
+        // Initialize the logistics platform
+        core::initialize(&admin);
+    }
+
+    #[test(aptos_framework = @aptos_framework)]
+    public entry fun test_initialize(aptos_framework: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         // Add assertions to check if the modules are properly initialized
     }
 
-    #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, user = @0x111)]
-    public entry fun test_user_registration(aptos_framework: &signer, admin: &signer, user: &signer) {
-        setup_test(aptos_framework, admin);
+    #[test(aptos_framework = @aptos_framework, user = @0x111)]
+    public entry fun test_user_registration(aptos_framework: &signer, user: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let user_address = signer::address_of(user);
         account::create_account_for_test(user_address);
@@ -47,9 +87,9 @@ module logistics_platform::logistics_platform_tests {
         // Add assertions to check if the user is properly registered
     }
 
-    #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, courier = @0x333)]
-    public entry fun test_courier_registration(aptos_framework: &signer, admin: &signer, courier: &signer) {
-        setup_test(aptos_framework, admin);
+    #[test(aptos_framework = @aptos_framework, courier = @0x333)]
+    public entry fun test_courier_registration(aptos_framework: &signer, courier: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let courier_address = signer::address_of(courier);
         account::create_account_for_test(courier_address);
@@ -60,8 +100,8 @@ module logistics_platform::logistics_platform_tests {
     }
 
     #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, user = @0x111, recipient = @0x222)]
-    public entry fun test_create_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer) {
-        setup_test(aptos_framework, admin);
+    public entry fun test_create_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let user_address = signer::address_of(user);
         let recipient_address = signer::address_of(recipient);
@@ -94,8 +134,8 @@ module logistics_platform::logistics_platform_tests {
     }
 
     #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, user = @0x111, recipient = @0x222, courier = @0x333)]
-    public entry fun test_accept_and_complete_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer, courier: &signer) {
-        setup_test(aptos_framework, admin);
+    public entry fun test_accept_and_complete_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer, courier: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let user_address = signer::address_of(user);
         let recipient_address = signer::address_of(recipient);
@@ -126,7 +166,12 @@ module logistics_platform::logistics_platform_tests {
             4,
             10
         );
-        
+
+        for (i in 0..11) {
+            courier_management::update_completed_orders_for_test(signer::address_of(courier));
+        };
+
+
         // Accept the order
         core::accept_order(courier, 0);
         
@@ -138,8 +183,8 @@ module logistics_platform::logistics_platform_tests {
     }
 
     #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, user = @0x111, recipient = @0x222)]
-    public entry fun test_cancel_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer) {
-        setup_test(aptos_framework, admin);
+    public entry fun test_cancel_order(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let user_address = signer::address_of(user);
         let recipient_address = signer::address_of(recipient);
@@ -175,18 +220,46 @@ module logistics_platform::logistics_platform_tests {
     }
 
     #[test(aptos_framework = @aptos_framework, admin = @logistics_platform)]
-    public entry fun test_finance_operations(aptos_framework: &signer, admin: &signer) {
-        setup_test(aptos_framework, admin);
+    public entry fun test_finance_operations(aptos_framework: &signer, admin: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
-        // Test withdrawing platform fees
-        finance::withdraw_platform_fees(admin, 100000);
+        let user = account::create_signer_for_test(@0x111);
+        let recipient = account::create_signer_for_test(@0x222);
+        account::create_account_for_test(@0x111);
+        account::create_account_for_test(@0x222);
         
-        // Add assertions to check if the financial operations are working correctly
+        user_management::register_user(&user, string::utf8(b"user@example.com"));
+        user_management::register_user(&recipient, string::utf8(b"recipient@example.com"));
+        
+        coin::register<AptosCoin>(&user);
+        coin::transfer<AptosCoin>(admin, @0x111, 1000000);
+        
+        core::create_order(
+            &user,
+            @0x222,
+            string::utf8(b"123 Pickup St"),
+            string::utf8(b"456 Delivery Ave"),
+            100,
+            200,
+            300,
+            400,
+            500000,
+            1000000,
+            4,
+            10
+        );
+        
+        timestamp::fast_forward_seconds(60);
+        
+        let platform_balance = finance::get_platform_balance();
+        finance::withdraw_platform_fees(admin, platform_balance);
+        
+        assert!(finance::get_platform_balance() == 0, 1);
     }
 
     #[test(aptos_framework = @aptos_framework, admin = @logistics_platform, user = @0x111, recipient = @0x222, courier = @0x333)]
-    public entry fun test_statistics(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer, courier: &signer) {
-        setup_test(aptos_framework, admin);
+    public entry fun test_statistics(aptos_framework: &signer, admin: &signer, user: &signer, recipient: &signer, courier: &signer) acquires MintCapStore {
+        setup_test(aptos_framework);
         
         let user_address = signer::address_of(user);
         let recipient_address = signer::address_of(recipient);
@@ -219,6 +292,11 @@ module logistics_platform::logistics_platform_tests {
             10
         );
         
+        for (i in 0..11) {
+            courier_management::update_completed_orders_for_test(signer::address_of(courier));
+        };
+
+
         // Accept the order
         core::accept_order(courier, 0);
         
