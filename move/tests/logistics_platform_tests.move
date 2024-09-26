@@ -13,11 +13,11 @@ module logistics_platform::logistics_platform_tests {
     use logistics_platform::statistics;
 
     // Test accounts
-    const ADMIN: address = @0xd6600cbe05c28dea705e623663ea618b24f92e22250a0e9b09475e1d2c1d8ed2;
-    const USER1: address = @0x111;
-    const USER2: address = @0x222;
-    const COURIER1: address = @0x333;
-    const COURIER2: address = @0x444;
+    const ADMIN: address = @0x9a11b018c79a8268c1ef436ffd660372a0719777fa58d648f99825abe4298e3f;
+    const USER1: address = @0xf41dd34c4e35fceea394192ce87095016161af143bcaa9fc273c66b7c04e099e;
+    const USER2: address = @0xb153098d6fb27e7d730f52cff31e7443237bfc8ad833e092b76fb48d690d24a9;
+    const COURIER1: address = @0x57ffe45b3bd30f486f407b6e1eac209306430d88bd8cc51489d6fc9cab0d6a15;
+    const COURIER2: address = @0x8ccc693e1d93d656a6f585bc87b6e141d4d8aec51dbd980f0255a0fa5b061f59;
 
     struct MintCapStore has key {
         mint_cap: MintCapability<AptosCoin>,

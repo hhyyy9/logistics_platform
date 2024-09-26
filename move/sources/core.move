@@ -17,7 +17,7 @@ module logistics_platform::core {
     use logistics_platform::statistics;
 
     // Constants
-    const ADMIN_ADDRESS: address = @0xd6600cbe05c28dea705e623663ea618b24f92e22250a0e9b09475e1d2c1d8ed2; // Replace with actual admin address
+    const ADMIN_ADDRESS: address = @0x9a11b018c79a8268c1ef436ffd660372a0719777fa58d648f99825abe4298e3f; // Replace with actual admin address
 
     // Error codes
     const E_NOT_INITIALIZED: u64 = 1;

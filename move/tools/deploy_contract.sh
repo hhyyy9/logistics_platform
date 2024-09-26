@@ -3,7 +3,7 @@
  # @Author: JackyHuang hhyyy9@gmail.com
  # @Date: 2024-08-01 19:36:32
  # @LastEditors: JackyHuang hhyyy9@gmail.com
- # @LastEditTime: 2024-08-02 20:56:23
+ # @LastEditTime: 2024-09-20 18:18:58
  # @FilePath: /event_verifier/tools/deploy_contract.sh
  # @Description: 
  # 
@@ -13,7 +13,7 @@
 set -e  # Exit immediately if a command exits with a non-zero status.
 
 # Configuration
-CONTRACT_NAME="event_verifier"
+CONTRACT_NAME="logistics_platform"
 PACKAGE_DIR="../"
 SKIP_FETCH_LATEST_GIT_DEPS="--skip-fetch-latest-git-deps" # Optional
 
