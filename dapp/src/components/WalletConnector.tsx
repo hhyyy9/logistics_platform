@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { Button, Typography, Space, Avatar } from 'antd';
 import { WalletOutlined, UserOutlined } from '@ant-design/icons';
+import { useRootStore } from '../stores/RootStore';
 
 const { Text } = Typography;
 
@@ -12,33 +13,26 @@ function WalletConnector() {
     connected,
     wallet,
     wallets,
+    signAndSubmitTransaction
   } = useWallet();
 
+  const rootStore = useRootStore();
+
   useEffect(() => {
-    console.log("Wallet state:", { wallet, wallets, connected });
-  }, [wallet, wallets, connected]);
+    console.log("钱包状态:", { wallet, wallets, connected });
+    if (connected && wallet && wallets && signAndSubmitTransaction) {
+      rootStore.initializeContract(signAndSubmitTransaction)
+        .catch((error) => {
+          console.error("初始化合约时出错:", error);
+        });
+    }
+  }, [connected, wallet, wallets, signAndSubmitTransaction, rootStore]);
 
   const handleConnect = async () => {
-    console.log("Attempting to connect wallet");
-    console.log("Available wallets:", wallets);
-    console.log("Selected wallet:", wallet);
-
-    if (!wallets || wallets.length === 0) {
-      console.error('没有可用的钱包');
-      return;
-    }
-
-    try {
-      if (wallet) {
-        await connect(wallet.name);
-      } else if (wallets.length > 0) {
-        await connect(wallets[0].name);
-      } else {
-        throw new Error("No wallet available");
-      }
-      console.log('钱包连接成功');
-    } catch (error) {
-      console.error("连接钱包时出错:", error);
+    if (wallet) {
+      await connect(wallet.name);
+    } else if (wallets && wallets.length > 0) {
+      await connect(wallets[0].name);
     }
   };
 

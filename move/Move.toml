@@ -2,6 +2,7 @@
 name = "delivery_service"
 version = "1.0.0"
 authors = []
+upgrade_policy = "compatible"
 
 [addresses]
 logistics_platform = "0x9a11b018c79a8268c1ef436ffd660372a0719777fa58d648f99825abe4298e3f"

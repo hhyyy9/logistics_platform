@@ -1,10 +1,11 @@
 module logistics_platform::courier_management {
-    use std::string::String;
+    use std::string::{Self, String};
     use aptos_std::table::{Self, Table};
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
     use aptos_framework::timestamp;
     use std::signer;
+    use std::vector;
 
     friend logistics_platform::core;
 
@@ -151,5 +152,10 @@ module logistics_platform::courier_management {
     #[test_only]
     public fun update_completed_orders_for_test(courier_address: address) acquires CourierStore {
         update_completed_orders(courier_address)
+    }
+
+    /// Check if the courier management module is initialized
+    public fun is_initialized(): bool {
+        exists<CourierStore>(@logistics_platform)
     }
 }

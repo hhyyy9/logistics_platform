@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
-import { observer } from "mobx-react-lite";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   HomeOutlined,
   UserOutlined,
-  CarOutlined,
   ShoppingCartOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
@@ -26,11 +24,39 @@ const { Title } = Typography;
 
 const wallets = [new PetraWallet()];
 
-const App: React.FC = observer(() => {
+const App: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const menuItems = [
+    {
+      key: "1",
+      icon: <HomeOutlined />,
+      label: <Link to="/">首页</Link>,
+    },
+    {
+      key: "2",
+      icon: <UserOutlined />,
+      label: <Link to="/user">用户管理</Link>,
+    },
+    {
+      key: "3",
+      icon: <UserOutlined />,
+      label: <Link to="/courier">快递员管理</Link>,
+    },
+    {
+      key: "4",
+      icon: <ShoppingCartOutlined />,
+      label: <Link to="/order">订单管理</Link>,
+    },
+    {
+      key: "5",
+      icon: <DollarOutlined />,
+      label: <Link to="/finance">财务</Link>,
+    },
+  ];
 
   return (
     <AptosWalletAdapterProvider
@@ -60,33 +86,7 @@ const App: React.FC = observer(() => {
               theme="dark"
               mode="inline"
               defaultSelectedKeys={["1"]}
-              items={[
-                {
-                  key: "1",
-                  icon: <HomeOutlined />,
-                  label: <Link to="/">首页</Link>,
-                },
-                {
-                  key: "2",
-                  icon: <UserOutlined />,
-                  label: <Link to="/user">用户管理</Link>,
-                },
-                {
-                  key: "3",
-                  icon: <CarOutlined />,
-                  label: <Link to="/courier">快递员管理</Link>,
-                },
-                {
-                  key: "4",
-                  icon: <ShoppingCartOutlined />,
-                  label: <Link to="/order">订单管理</Link>,
-                },
-                {
-                  key: "5",
-                  icon: <DollarOutlined />,
-                  label: <Link to="/finance">财务</Link>,
-                },
-              ]}
+              items={menuItems}
             />
           </Sider>
           <Layout>
@@ -125,7 +125,7 @@ const App: React.FC = observer(() => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/user" element={<UserManagement />} />
-                <Route path="/courier" element={<CourierManagement />} />
+                <Route path="/courier/*" element={<CourierManagement />} />
                 <Route path="/order" element={<OrderManagement />} />
                 <Route path="/finance" element={<Finance />} />
               </Routes>
@@ -135,6 +135,6 @@ const App: React.FC = observer(() => {
       </Router>
     </AptosWalletAdapterProvider>
   );
-});
+};
 
 export default App;
