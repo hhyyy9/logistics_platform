@@ -39,3 +39,20 @@ scrub glance perfect zebra crush prepare convince merit any crush ritual burst
 0x08112834c88e612d3e522b722d18d4d54e0f9d70ede87c98264ea746ea9643ea
 ### private key:
 0xb3248221137c9f88430fbd860da59d978d7738f33827a88244f23407ca484a57
+
+
+aptos init --network devnet
+
+./compile_contract.sh --dev
+./deploy_contract.sh devnet 0xa9d1702ac29b697d1a150e0eb0cfba91fd574404df3d06874ac167468a1c0822
+
+aptos config show-profiles
+
+aptos init --profile default
+
+
+aptos init --profile admin
+
+aptos account balance --profile admin
+
+aptos account fund-with-faucet --account admin

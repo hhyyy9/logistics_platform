@@ -26,7 +26,7 @@ fi
 
 NETWORK=$1
 ACCOUNT_ADDRESS=$2
-PROFILE_NAME=""
+PROFILE_NAME="admin"
 
 case $NETWORK in
     local)
