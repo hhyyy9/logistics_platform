@@ -6,7 +6,7 @@ const WalletConnectionPrompt: React.FC = () => (
   <div style={{ textAlign: 'center', marginTop: '50px' }}>
     <Typography.Title level={3}>
       <ExclamationCircleOutlined style={{ marginRight: '8px', color: '#faad14' }} />
-      请点击右上角连接您的钱包
+      Please click the top right corner to connect your wallet
     </Typography.Title>
   </div>
 );

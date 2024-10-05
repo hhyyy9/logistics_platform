@@ -1,82 +1,73 @@
 module logistics_platform::statistics {
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
-    use aptos_framework::timestamp;
 
+    friend logistics_platform::user_management;
     friend logistics_platform::core;
 
-    struct PlatformStats has key {
+    struct PlatformStats has key, store {
         total_orders: u64,
-        accepted_orders: u64,
-        completed_orders: u64,
-        cancelled_orders: u64,
-        total_delivery_fees: u64,
-        total_service_fees: u64,
+        total_users: u64,
+        total_delivery_amount: u64,
+        total_transaction_amount: u64,
     }
 
-    struct OrderAcceptedEvent has drop, store {
-        order_id: u64,
-        timestamp: u64,
+    struct StatsStore has key {
+        stats: PlatformStats,
+        stats_updated_events: EventHandle<StatsUpdatedEvent>,
     }
 
-    struct EventHandles has key {
-        order_accepted_events: EventHandle<OrderAcceptedEvent>,
+    #[event]
+    struct StatsUpdatedEvent has drop, store {
+        total_orders: u64,
+        total_users: u64,
+        total_delivery_amount: u64,
+        total_transaction_amount: u64,
     }
 
-    public(friend) fun initialize(admin: &signer) {
-        move_to(admin, PlatformStats {
-            total_orders: 0,
-            accepted_orders: 0,
-            completed_orders: 0,
-            cancelled_orders: 0,
-            total_delivery_fees: 0,
-            total_service_fees: 0,
+    fun init_module(account: &signer) {
+        move_to(account, StatsStore {
+            stats: PlatformStats {
+                total_orders: 0,
+                total_users: 0,
+                total_delivery_amount: 0,
+                total_transaction_amount: 0,
+            },
+            stats_updated_events: account::new_event_handle<StatsUpdatedEvent>(account),
         });
-
-        move_to(admin, EventHandles {
-            order_accepted_events: account::new_event_handle<OrderAcceptedEvent>(admin),
-        });
     }
 
-    public(friend) fun update_order_created(delivery_fee: u64, service_fee: u64) acquires PlatformStats {
-        let stats = borrow_global_mut<PlatformStats>(@logistics_platform);
+    public(friend) fun update_stats_new_order(amount: u64) acquires StatsStore {
+        let stats_store = borrow_global_mut<StatsStore>(@logistics_platform);
+        let stats = &mut stats_store.stats;
         stats.total_orders = stats.total_orders + 1;
-        stats.total_delivery_fees = stats.total_delivery_fees + delivery_fee;
-        stats.total_service_fees = stats.total_service_fees + service_fee;
+        stats.total_delivery_amount = stats.total_delivery_amount + amount;
+        stats.total_transaction_amount = stats.total_transaction_amount + amount;
+
+        emit_stats_updated_event(stats_store);
     }
 
-    public(friend) fun update_order_accepted(order_id: u64) acquires PlatformStats, EventHandles {
-        let stats = borrow_global_mut<PlatformStats>(@logistics_platform);
-        stats.accepted_orders = stats.accepted_orders + 1;
+    public(friend) fun update_stats_new_user() acquires StatsStore {
+        let stats_store = borrow_global_mut<StatsStore>(@logistics_platform);
+        let stats = &mut stats_store.stats;
+        stats.total_users = stats.total_users + 1;
 
-        let event_handles = borrow_global_mut<EventHandles>(@logistics_platform);
-        event::emit_event(&mut event_handles.order_accepted_events, OrderAcceptedEvent {
-            order_id,
-            timestamp: timestamp::now_seconds(),
+        emit_stats_updated_event(stats_store);
+    }
+
+    fun emit_stats_updated_event(stats_store: &mut StatsStore) {
+        event::emit_event(&mut stats_store.stats_updated_events, StatsUpdatedEvent {
+            total_orders: stats_store.stats.total_orders,
+            total_users: stats_store.stats.total_users,
+            total_delivery_amount: stats_store.stats.total_delivery_amount,
+            total_transaction_amount: stats_store.stats.total_transaction_amount,
         });
     }
 
-    public(friend) fun update_order_completed() acquires PlatformStats {
-        let stats = borrow_global_mut<PlatformStats>(@logistics_platform);
-        stats.completed_orders = stats.completed_orders + 1;
-    }
-
-    public(friend) fun update_order_cancelled(delivery_fee: u64, service_fee: u64) acquires PlatformStats {
-        let stats = borrow_global_mut<PlatformStats>(@logistics_platform);
-        stats.cancelled_orders = stats.cancelled_orders + 1;
-        stats.total_delivery_fees = stats.total_delivery_fees - delivery_fee;
-        stats.total_service_fees = stats.total_service_fees - service_fee;
-    }
-
-    public fun get_platform_stats(): (u64, u64, u64, u64, u64, u64) acquires PlatformStats {
-        let stats = borrow_global<PlatformStats>(@logistics_platform);
-        (
-            stats.total_orders,
-            stats.accepted_orders,
-            stats.completed_orders,
-            stats.cancelled_orders,
-            stats.total_delivery_fees,
-            stats.total_service_fees
-        )
+    #[view]
+    public fun get_platform_stats(): (u64, u64, u64, u64) acquires StatsStore {
+        let stats_store = borrow_global<StatsStore>(@logistics_platform);
+        let stats = &stats_store.stats;
+        (stats.total_orders, stats.total_users, stats.total_delivery_amount, stats.total_transaction_amount)
     }
 }

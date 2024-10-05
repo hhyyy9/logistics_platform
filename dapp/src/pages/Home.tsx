@@ -1,49 +1,49 @@
 import React, { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useRootStore } from "../stores/RootStore";
-import { Card, Statistic, Row, Col } from "antd";
+import { Card, Statistic, Row, Col, Spin } from "antd";
 
 const Home = observer(() => {
   const { statisticsStore } = useRootStore();
 
   useEffect(() => {
-
+    const fetchStats = async () => {
+      try {
+        await statisticsStore.fetchPlatformStats();
+      } catch (error) {
+        console.error("Error fetching platform statistics:", error);
+        // You can add user-friendly error messages here
+      }
+    };
+    fetchStats();
   }, [statisticsStore]);
+
+  if (statisticsStore.isLoading) {
+    return <Spin size="large" />;
+  }
 
   return (
     <div>
-      <h1>物流平台统计</h1>
+      <h1>Platform Statistics</h1>
       <Row gutter={16}>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
-            <Statistic title="总订单数" value={statisticsStore.getTotalOrders} />
+            <Statistic title="Total Orders" value={statisticsStore.totalOrders} />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
-            <Statistic title="已接受订单" value={statisticsStore.acceptedOrders} />
+            <Statistic title="Total Users" value={statisticsStore.totalUsers} />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
-            <Statistic title="已完成订单" value={statisticsStore.completedOrders} />
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={8}>
-          <Card>
-            <Statistic title="已取消订单" value={statisticsStore.cancelledOrders} />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card>
-            <Statistic title="总配送费" value={statisticsStore.totalDeliveryFees} prefix="¥" />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card>
-            <Statistic title="总服务费" value={statisticsStore.totalServiceFees} prefix="¥" />
+            <Statistic 
+              title="Total Delivery Amount" 
+              value={statisticsStore.totalDeliveryAmount} 
+              precision={2}
+              prefix="$"
+            />
           </Card>
         </Col>
       </Row>

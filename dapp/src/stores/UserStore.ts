@@ -1,54 +1,32 @@
 import { types, flow, Instance } from 'mobx-state-tree';
 import { message } from 'antd';
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 import { InputTransactionData } from '@aptos-labs/wallet-adapter-core';
-import { AptosClient } from 'aptos';
 
-const User = types.model({
+export const User = types.model('User', {
     address: types.string,
     email: types.string,
-    isActive: types.boolean
+    isActive: types.boolean,
+    isCourier: types.boolean,
+    balance: types.number,
+    timestamp: types.number // Added timestamp field
 });
 
 export const UserStore = types
-    .model({
-        users: types.array(User),
-        totalUsers: types.number,
-        activeUsers: types.number
+    .model('UserStore', {
+        currentUser: types.maybe(User),
+        isLoading: types.boolean,
     })
-    .views((self) => ({
-        get averageActiveRate() {
-            return self.totalUsers > 0 ? self.activeUsers / self.totalUsers : 0;
-        },
-    }))
     .actions((self) => {
-        const setUsers = (users: Instance<typeof User>[]) => {
-            self.users.replace(users);
-            self.totalUsers = users.length;
-            self.activeUsers = users.filter((user) => user.isActive).length;
+        const setCurrentUser = (user: typeof User.Type | undefined) => {
+            self.currentUser = user;
         };
 
-        const addUser = (user: Instance<typeof User>) => {
-            self.users.push(user);
-            self.totalUsers += 1;
-            if (user.isActive) self.activeUsers += 1;
+        const setLoading = (loading: boolean) => {
+            self.isLoading = loading;
         };
 
-        const updateUser = (address: string, email: string, isActive: boolean) => {
-            const user = self.users.find((u) => u.address === address);
-            if (user) {
-                if (user.isActive !== isActive) {
-                    self.activeUsers += isActive ? 1 : -1;
-                }
-                user.email = email;
-                user.isActive = isActive;
-            }
-        };
-
-        const fetchUsers = flow(function* (client: AptosClient, moduleAddress: string) {
-
-        });
-
-        const registerUser = flow(function* (email: string, signAndSubmitTransaction: (transaction: { payload: InputTransactionData }) => Promise<any>) {
+        const registerUser = flow(function* (email: string, isCourier: boolean, signAndSubmitTransaction: (transaction: { payload: InputTransactionData }) => Promise<any>) {
             try {
                 const moduleAddress = process.env.REACT_APP_MOVE_MODULE_ADDRESS;
                 if (!moduleAddress) {
@@ -59,104 +37,73 @@ export const UserStore = types
                     data: {
                         function: `${moduleAddress}::user_management::register_user`,
                         typeArguments: [],
-                        functionArguments: [email],
+                        functionArguments: [email, isCourier], // Directly pass boolean value
                     },
                 };
                 yield signAndSubmitTransaction({ payload });
-                message.success('用户注册成功');
-                // 这里可能需要更新用户列表
+                message.success('User registration successful');
+                // May need to update user list here
                 // yield fetchUsers(client, moduleAddress);
             } catch (error) {
-                console.error('注册过程中出错', error);
+                console.error('Error during registration', error);
                 if (error instanceof Error) {
-                    message.error(`用户注册失败: ${error.message}`);
+                    message.error(`User registration failed: ${error.message}`);
                 } else {
-                    message.error('用户注册失败');
+                    message.error('User registration failed');
                 }
             }
         });
 
-        const updateUserInfo = flow(function* (newEmail: string, signAndSubmitTransaction: (transaction: { payload: InputTransactionData }) => Promise<any>) {
+        const getUserInfo = flow(function* (address: string) {
+            self.isLoading = true;
             try {
                 const moduleAddress = process.env.REACT_APP_MOVE_MODULE_ADDRESS;
                 if (!moduleAddress) {
                     throw new Error("REACT_APP_MOVE_MODULE_ADDRESS is not defined");
                 }
 
-                const payload: InputTransactionData = {
-                    data: {
-                        function: `${moduleAddress}::user_management::update_user_info`,
-                        typeArguments: [],
-                        functionArguments: [newEmail],
-                    },
-                };
-                yield signAndSubmitTransaction({ payload });
-                message.success('用户信息更新成功');
-                // 这里可能需要更新本地用户信息
-                // yield fetchUsers(client, moduleAddress);
-            } catch (error) {
-                message.error('用户信息更新失败');
-                console.error(error);
-            }
-        });
+                const config = new AptosConfig({ network: Network.DEVNET });
+                const aptos = new Aptos(config);
 
-        const deactivateUser = flow(function* (address: string, signAndSubmitTransaction: (transaction: { payload: InputTransactionData }) => Promise<any>) {
-            try {
-                const moduleAddress = process.env.REACT_APP_MOVE_MODULE_ADDRESS;
-                if (!moduleAddress) {
-                    throw new Error("REACT_APP_MOVE_MODULE_ADDRESS is not defined");
+                const response = yield aptos.view({
+                    payload: {
+                        function: `${moduleAddress}::user_management::get_user_info_view_v2`,
+                        typeArguments: [],
+                        functionArguments: [address]
+                    },
+                });
+
+                const [emailHex, isActive, isCourier, balance] = response;
+                
+                let email;
+                if (typeof emailHex === 'string' && emailHex.startsWith('0x')) {
+                    const bytes = new Uint8Array(emailHex.slice(2).match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+                    email = new TextDecoder().decode(bytes);
                 }
-
-                const payload: InputTransactionData = {
-                    data: {
-                        function: `${moduleAddress}::user_management::deactivate_user`,
-                        typeArguments: [],
-                        functionArguments: [address],
-                    },
-                };
-                yield signAndSubmitTransaction({ payload });
-                message.success('用户已停用');
-                updateUser(address, self.users.find(u => u.address === address)?.email || '', false);
+                
+                return User.create({
+                    address,
+                    email: email || '',
+                    isActive,
+                    isCourier,
+                    balance: Number(balance), // Convert balance to number
+                    timestamp: Date.now() // Use current timestamp as contract doesn't return this information
+                });
             } catch (error) {
-                message.error('用户停用失败');
-                console.error('停用用户时出错:', error);
-            }
-        });
-
-        const reactivateUser = flow(function* (address: string, signAndSubmitTransaction: (transaction: { payload: InputTransactionData }) => Promise<any>) {
-            try {
-                const moduleAddress = process.env.REACT_APP_MOVE_MODULE_ADDRESS;
-                if (!moduleAddress) {
-                    throw new Error("REACT_APP_MOVE_MODULE_ADDRESS is not defined");
-                }
-
-                const payload: InputTransactionData = {
-                    data: {
-                        function: `${moduleAddress}::user_management::reactivate_user`,
-                        typeArguments: [],
-                        functionArguments: [address],
-                    },
-                };
-                yield signAndSubmitTransaction({ payload });
-                message.success('用户已重新激活');
-                updateUser(address, self.users.find(u => u.address === address)?.email || '', true);
-            } catch (error) {
-                message.error('用户重新激活失败');
-                console.error('重新激活用户时出错:', error);
+                console.error('Failed to get user information:', error);
+                message.error('Failed to get user information');
+                return undefined;
+            } finally {
+                self.isLoading = false;
             }
         });
 
         return {
-            setUsers,
-            addUser,
-            updateUser,
-            fetchUsers,
+            setCurrentUser,
+            setLoading,
             registerUser,
-            updateUserInfo,
-            deactivateUser,
-            reactivateUser,
+            getUserInfo,
         };
     });
 
-export interface IUserStore extends Instance<typeof UserStore> {}
-export default UserStore;
+export type IUserStore = Instance<typeof UserStore>;

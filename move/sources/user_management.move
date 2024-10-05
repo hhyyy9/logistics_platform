@@ -1,63 +1,42 @@
 module logistics_platform::user_management {
-    use std::string::String;
+    use std::string::{Self, String};
     use aptos_std::table::{Self, Table};
-    use aptos_framework::account;
-    use aptos_framework::event::{Self, EventHandle};
-    use aptos_framework::timestamp;
     use std::signer;
-    
+    use logistics_platform::statistics;
 
-    friend logistics_platform::core;
-
+    // Error constants
     const E_NOT_INITIALIZED: u64 = 1;
-    const E_ALREADY_REGISTERED: u64 = 8;
-    const E_UNAUTHORIZED: u64 = 6;
-    const E_USER_DEACTIVATED: u64 = 21;
-    const E_USER_ALREADY_ACTIVE: u64 = 24;
+    const E_ALREADY_REGISTERED: u64 = 2;
+    const E_UNAUTHORIZED: u64 = 3;
+    const E_USER_DEACTIVATED: u64 = 4;
+    const E_INSUFFICIENT_BALANCE: u64 = 5;
+
+    // Initial balance constant
+    const INITIAL_BALANCE: u64 = 10000;
+
+    const RESOURCE_ACCOUNT: address = @logistics_platform;
 
     struct User has store {
         address: address,
         email: String,
         is_active: bool,
+        is_courier: bool,
+        balance: u64,
     }
 
     struct UserStore has key {
         users: Table<address, User>,
-        user_updated_events: EventHandle<UserUpdatedEvent>,
-        user_deactivated_events: EventHandle<UserDeactivatedEvent>,
-        user_reactivated_events: EventHandle<UserReactivatedEvent>,
     }
 
-    #[event]
-    struct UserUpdatedEvent has drop, store {
-        user_address: address,
-        new_email: String,
-        timestamp: u64,
-    }
+    fun init_module(account: &signer) {
+        assert!(signer::address_of(account) == @logistics_platform, E_UNAUTHORIZED);
 
-    #[event]
-    struct UserDeactivatedEvent has drop, store {
-        user_address: address,
-        timestamp: u64,
-    }
-
-    #[event]
-    struct UserReactivatedEvent has drop, store {
-        user_address: address,
-        timestamp: u64,
-    }
-
-    public(friend) fun initialize(admin: &signer) {
-        move_to(admin, UserStore {
+        move_to(account, UserStore {
             users: table::new(),
-            user_updated_events: account::new_event_handle<UserUpdatedEvent>(admin),
-            user_deactivated_events: account::new_event_handle<UserDeactivatedEvent>(admin),
-            user_reactivated_events: account::new_event_handle<UserReactivatedEvent>(admin),
         });
     }
 
-    /// Register a new user
-    public entry fun register_user(user: &signer, email: String) acquires UserStore {
+    public entry fun register_user(user: &signer, email: String, is_courier: bool) acquires UserStore {
         let user_store = borrow_global_mut<UserStore>(@logistics_platform);
         let user_address = signer::address_of(user);
         
@@ -65,70 +44,75 @@ module logistics_platform::user_management {
         
         let new_user = User {
             address: user_address,
-            email,
+            email: email,
             is_active: true,
+            is_courier: is_courier,
+            balance: INITIAL_BALANCE, // Initialize user balance to 10000
         };
         
         table::add(&mut user_store.users, user_address, new_user);
+
+        statistics::update_stats_new_user();
     }
 
-    /// Update user info
-    public entry fun update_user_info(user: &signer, new_email: String) acquires UserStore {
-        let user_store = borrow_global_mut<UserStore>(@logistics_platform);
-        let user_address = signer::address_of(user);
-        
-        assert!(table::contains(&user_store.users, user_address), E_UNAUTHORIZED);
-        let user_info = table::borrow_mut(&mut user_store.users, user_address);
-        assert!(user_info.is_active, E_USER_DEACTIVATED);
-        
-        if (user_info.email != new_email) {
-            user_info.email = new_email;
+    public fun get_user_info(user_address: address): (vector<u8>, bool, bool, u64) acquires UserStore {
+        let user_store = borrow_global<UserStore>(RESOURCE_ACCOUNT);
+        let user = table::borrow(&user_store.users, user_address);
+        (
+            *string::bytes(&user.email),
+            user.is_active,
+            user.is_courier,
+            user.balance
+        )
+    }
+    
+    #[view]
+    public fun get_user_info_view(user_address: address): (vector<u8>, bool, bool) acquires UserStore {
+        let (email, is_active, is_courier, _) = get_user_info(user_address);
+        (email, is_active, is_courier)
+    }
 
-            event::emit_event(&mut user_store.user_updated_events, UserUpdatedEvent {
-                user_address,
-                new_email,
-                timestamp: timestamp::now_seconds(),
-            });
+    #[view]
+    public fun get_user_info_view_v2(user_address: address): (vector<u8>, bool, bool, u64) acquires UserStore {
+        let (email, is_active, is_courier, balance) = get_user_info(user_address);
+        (email, is_active, is_courier, balance)
+    }
+
+    public fun check_user_exists(user_address: address): bool acquires UserStore {
+        let user_store = borrow_global<UserStore>(@logistics_platform);
+        table::contains(&user_store.users, user_address)
+    }
+
+    #[view]
+    public fun check_user_exists_view(user_address: address): bool acquires UserStore {
+        check_user_exists(user_address)
+    }
+
+    public fun deduct_balance(user_address: address, amount: u64) acquires UserStore {
+        let user_store = borrow_global_mut<UserStore>(@logistics_platform);
+        let user = table::borrow_mut(&mut user_store.users, user_address);
+        assert!(user.balance >= amount, E_INSUFFICIENT_BALANCE);
+        user.balance = user.balance - amount;
+    }
+
+    public fun add_balance(user_address: address, amount: u64) acquires UserStore {
+        let user_store = borrow_global_mut<UserStore>(@logistics_platform);
+        let user = table::borrow_mut(&mut user_store.users, user_address);
+        user.balance = user.balance + amount;
+    }
+
+    public fun is_courier(user_address: address): bool acquires UserStore {
+        let user_store = borrow_global<UserStore>(@logistics_platform);
+        if (table::contains(&user_store.users, user_address)) {
+            let user = table::borrow(&user_store.users, user_address);
+            user.is_courier
+        } else {
+            false
         }
     }
 
-    public entry fun deactivate_user(admin: &signer, user_address: address) acquires UserStore {
-        assert!(signer::address_of(admin) == @logistics_platform, E_UNAUTHORIZED);
-        
-        let user_store = borrow_global_mut<UserStore>(@logistics_platform);
-        assert!(table::contains(&user_store.users, user_address), E_UNAUTHORIZED);
-        
-        let user_info = table::borrow_mut(&mut user_store.users, user_address);
-        user_info.is_active = false;
-
-        event::emit_event(&mut user_store.user_deactivated_events, UserDeactivatedEvent {
-            user_address,
-            timestamp: timestamp::now_seconds(),
-        });
-    }
-
-    public entry fun reactivate_user(admin: &signer, user_address: address) acquires UserStore {
-        assert!(signer::address_of(admin) == @logistics_platform, E_UNAUTHORIZED);
-        
-        let user_store = borrow_global_mut<UserStore>(@logistics_platform);
-        assert!(table::contains(&user_store.users, user_address), E_UNAUTHORIZED);
-        
-        let user_info = table::borrow_mut(&mut user_store.users, user_address);
-        assert!(!user_info.is_active, E_USER_ALREADY_ACTIVE);
-
-        user_info.is_active = true;
-
-        event::emit_event(&mut user_store.user_reactivated_events, UserReactivatedEvent {
-            user_address,
-            timestamp: timestamp::now_seconds(),
-        });
-    }
-
-    /// Assert that a user is active
-    public(friend) fun assert_user_active(user_address: address) acquires UserStore {
-        let user_store = borrow_global<UserStore>(@logistics_platform);
-        assert!(table::contains(&user_store.users, user_address), E_UNAUTHORIZED);
-        let user_info = table::borrow(&user_store.users, user_address);
-        assert!(user_info.is_active, E_USER_DEACTIVATED);
+    #[test_only]
+    public fun init_module_for_test(account: &signer) {
+        init_module(account);
     }
 }

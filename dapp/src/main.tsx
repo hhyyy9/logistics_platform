@@ -4,7 +4,6 @@ import { BrowserRouter } from "react-router-dom";
 import { RootStore, RootStoreProvider } from './stores/RootStore';
 import App from "./App";
 
-// 创建 RootStore 实例
 const rootStore = RootStore.create({});
 
 

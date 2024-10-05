@@ -5,7 +5,7 @@ authors = []
 upgrade_policy = "compatible"
 
 [addresses]
-logistics_platform = "0xa9d1702ac29b697d1a150e0eb0cfba91fd574404df3d06874ac167468a1c0822"
+logistics_platform = "0x8b0988a046fb22800ea370b3194ade0709861ed987cd978c86ed4fc0709ca2ea"
 
 [dev-addresses]
 

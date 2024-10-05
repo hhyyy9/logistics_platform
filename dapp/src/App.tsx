@@ -6,14 +6,11 @@ import {
   HomeOutlined,
   UserOutlined,
   ShoppingCartOutlined,
-  DollarOutlined,
 } from "@ant-design/icons";
 import { Button, Layout, Menu, theme, Typography } from "antd";
 import Home from "./pages/Home";
 import UserManagement from "./pages/UserManagement";
-import CourierManagement from "./pages/CourierManagement";
 import OrderManagement from "./pages/OrderManagement";
-import Finance from "./pages/Finance";
 import WalletConnector from "./components/WalletConnector";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import { PetraWallet } from "petra-plugin-wallet-adapter";
@@ -34,28 +31,18 @@ const App: React.FC = () => {
     {
       key: "1",
       icon: <HomeOutlined />,
-      label: <Link to="/">首页</Link>,
+      label: <Link to="/">Home</Link>,
     },
     {
       key: "2",
       icon: <UserOutlined />,
-      label: <Link to="/user">用户管理</Link>,
-    },
-    {
-      key: "3",
-      icon: <UserOutlined />,
-      label: <Link to="/courier">快递员管理</Link>,
+      label: <Link to="/user">User Management</Link>,
     },
     {
       key: "4",
       icon: <ShoppingCartOutlined />,
-      label: <Link to="/order">订单管理</Link>,
-    },
-    {
-      key: "5",
-      icon: <DollarOutlined />,
-      label: <Link to="/finance">财务</Link>,
-    },
+      label: <Link to="/order">Order Management</Link>,
+    }
   ];
 
   return (
@@ -79,7 +66,7 @@ const App: React.FC = () => {
               }}
             >
               <Title level={4} style={{ color: "#fff", margin: 0 }}>
-                {collapsed ? "LMS" : "物流管理系统"}
+                {collapsed ? "LS" : "Logistics System"}
               </Title>
             </div>
             <Menu
@@ -125,9 +112,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/user" element={<UserManagement />} />
-                <Route path="/courier/*" element={<CourierManagement />} />
                 <Route path="/order" element={<OrderManagement />} />
-                <Route path="/finance" element={<Finance />} />
               </Routes>
             </Content>
           </Layout>

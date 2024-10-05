@@ -19,14 +19,11 @@ function WalletConnector() {
   const rootStore = useRootStore();
 
   useEffect(() => {
-    console.log("钱包状态:", { wallet, wallets, connected });
-    if (connected && wallet && wallets && signAndSubmitTransaction) {
-      rootStore.initializeContract(signAndSubmitTransaction)
-        .catch((error) => {
-          console.error("初始化合约时出错:", error);
-        });
+    console.log("Wallet status:", { wallet, wallets, connected });
+    if (connected && account) {
+      rootStore.setCurrentUserAddress(account.address);
     }
-  }, [connected, wallet, wallets, signAndSubmitTransaction, rootStore]);
+  }, [connected, wallet, wallets, signAndSubmitTransaction, rootStore, account]);
 
   const handleConnect = async () => {
     if (wallet) {
@@ -75,7 +72,7 @@ function WalletConnector() {
       onClick={handleConnect}
       size="large"
     >
-      连接钱包 {wallets ? `(${wallets.length})` : '(0)'}
+      Connect Wallet {wallets ? `(${wallets.length})` : '(0)'}
     </Button>
   );
 }
