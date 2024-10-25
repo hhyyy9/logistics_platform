@@ -1,14 +1,4 @@
 #!/bin/bash
-###
- # @Author: JackyHuang hhyyy9@gmail.com
- # @Date: 2024-08-01 19:36:32
- # @LastEditors: JackyHuang hhyyy9@gmail.com
- # @LastEditTime: 2024-09-20 18:18:58
- # @FilePath: /event_verifier/tools/deploy_contract.sh
- # @Description: 
- # 
- # Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
-### 
 
 set -e  # Exit immediately if a command exits with a non-zero status.
 

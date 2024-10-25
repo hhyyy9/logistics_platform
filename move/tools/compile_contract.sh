@@ -1,15 +1,4 @@
 #!/bin/bash
-###
- # @Author: JackyHuang hhyyy9@gmail.com
- # @Date: 2024-08-02 19:14:08
- # @LastEditors: JackyHuang hhyyy9@gmail.com
- # @LastEditTime: 2024-08-02 20:31:02
- # @FilePath: /event_verifier/tools/compile_contract.sh
- # @Description: 
- # 
- # Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
-### 
-
 set -e  # Exit immediately if a command exits with a non-zero status.
 
 # Check for --dev argument

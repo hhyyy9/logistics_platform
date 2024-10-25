@@ -63,20 +63,20 @@ const OrderManagement = observer(() => {
       
       <h2>Create Order</h2>
       <Form onFinish={handleCreateOrder}>
-        <Form.Item name="recipient" rules={[{ required: true, message: 'Please enter recipient address' }]}>
-          <Input placeholder="Recipient Address" />
+        <Form.Item name="recipient" rules={[{ required: true, message: 'Please enter recipient Atpos address' }]}>
+          <Input placeholder="Recipient Atpos Address" />
         </Form.Item>
-        <Form.Item name="courier" rules={[{ required: true, message: 'Please enter courier address' }]}>
-          <Input placeholder="Courier Address" />
+        <Form.Item name="courier" rules={[{ required: true, message: 'Please enter courier Atpos address' }]}>
+          <Input placeholder="Courier Atpos Address" />
         </Form.Item>
-        <Form.Item name="pickupAddress" rules={[{ required: true, message: 'Please enter pickup address' }]}>
-          <Input placeholder="Pickup Address" />
+        <Form.Item name="pickupAddress" rules={[{ required: true, message: 'Please enter pickup street number' }]}>
+          <Input placeholder="Pickup Street Number" />
         </Form.Item>
-        <Form.Item name="deliveryAddress" rules={[{ required: true, message: 'Please enter delivery address' }]}>
-          <Input placeholder="Destination Address" />
+        <Form.Item name="deliveryAddress" rules={[{ required: true, message: 'Please enter delivery street number' }]}>
+          <Input placeholder="Destination Street Number" />
         </Form.Item>
-        <Form.Item name="amount" rules={[{ required: true, message: 'Please enter amount' }]}>
-          <InputNumber placeholder="Amount" />
+        <Form.Item name="amount" rules={[{ required: true, message: 'Please enter cost' }]}>
+          <InputNumber placeholder="Cost" />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit">Create Order</Button>
@@ -122,15 +122,15 @@ const OrderManagement = observer(() => {
                 }
               >
                 <Descriptions column={2}>
-                  <Descriptions.Item label="Recipient">{order.recipient}</Descriptions.Item>
-                  <Descriptions.Item label="Courier">{order.courier}</Descriptions.Item>
-                  <Descriptions.Item label={<><EnvironmentOutlined /> Pickup Address</>}>
+                  <Descriptions.Item label="Recipient Atpos Address">{order.recipient}</Descriptions.Item>
+                  <Descriptions.Item label="Courier Atpos Address">{order.courier}</Descriptions.Item>
+                  <Descriptions.Item label={<><EnvironmentOutlined /> Pickup street number</>}>
                     {order.pickupAddress}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><EnvironmentOutlined /> Delivery Address</>}>
+                  <Descriptions.Item label={<><EnvironmentOutlined /> Delivery street number</>}>
                     {order.deliveryAddress}
                   </Descriptions.Item>
-                  <Descriptions.Item label={<><DollarOutlined /> Amount</>}>
+                  <Descriptions.Item label={<><DollarOutlined /> Cost</>}>
                     {order.amount}
                   </Descriptions.Item>
                   <Descriptions.Item label={<><ClockCircleOutlined /> Created At</>}>
