@@ -2,28 +2,31 @@
 
 # Logistics Platform
 
+This is a project for my Master's final project. It is a automatic logistics platform for customers and couriers to interact on Aptos blockchain. It's just a prototype and not a fully functional product.
+
 ## User Accounts
 
-### Admin
+You must use Petra Chrome Wallet to interact with the Aptos blockchain. Firstly, you need to create a new wallet and your own account. Here are the accounts I used for testing.
+
+### Admin for managing the platform
 - Mnemonic: because isolate ring ethics smart else glimpse hazard leg tower harbor lyrics
 - Public Key: 0x8b0988a046fb22800ea370b3194ade0709861ed987cd978c86ed4fc0709ca2ea
 - Private Key: 0x9a34603def11e329864c45b520dab07e869a3bc7dc9910da310169130f2886e9
 
 ### Create three users, two for customers, one for courier, write down their information for testing
-#### Customer1
+#### Customer1 for sending parcels
 - Mnemonic: mule unhappy three fork network amused blood bicycle fancy sponsor swap cage
 - Public Key: 0xd6a81c2feb078f039591c53f2338165e82f0f2a2691531fd52fe7d199a3b0cd8
 
-#### Customer2
+#### Customer2 for receiving parcels
 - Mnemonic: mule unhappy three fork network amused blood bicycle fancy sponsor swap cage
 - Public Key: 0xd6a81c2feb078f039591c53f2338165e82f0f2a2691531fd52fe7d199a3b0cd8
 
-#### Courier
+#### Courier for delivering parcels
 - Mnemonic: knee wild copper kangaroo pass iron plate coffee maximum cost step insect
 - Public Key: 0x5394f3b04dbae4b0680677d46f45ea64faf31d5dd47ebb00dc89b55d702c1f6e
 
 ## Setup Instructions
-
 
 1. Install Petra Chrome Wallet
    - Visit the Chrome Web Store
@@ -34,7 +37,6 @@
    - Open the Petra wallet
    - Choose "Create new wallet" or "Import existing wallet"
    - Follow the prompts to complete the wallet setup
-
 
 3. Show Aptos profiles:
    ```
